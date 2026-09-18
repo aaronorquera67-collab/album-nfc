@@ -38,16 +38,25 @@ export default async function StickerAlbumPage(
 
       <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-4 pb-[calc(8rem+env(safe-area-inset-bottom))] pt-[calc(1.25rem+env(safe-area-inset-top))] sm:gap-8 sm:px-8 sm:pt-16">
         <div className="flex flex-col gap-4 sm:gap-5">
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex items-start justify-between gap-3">
             <BrandLockup
               size="sm"
               href="/"
               className="inline-flex"
             />
 
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-bosque">
-              Álbum privado
-            </p>
+            <div className="flex flex-col items-end gap-1.5">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-bosque">
+                Álbum privado
+              </p>
+
+              <Link
+                href="/login"
+                className="text-[11px] font-medium text-muted-foreground/60 transition hover:text-tierra"
+              >
+                Administración
+              </Link>
+            </div>
           </div>
 
           <div className="min-w-0">
@@ -74,15 +83,6 @@ export default async function StickerAlbumPage(
           slug={album.slug}
           stickerCode={code}
         />
-
-        <footer className="pb-6 pt-2 text-center">
-          <Link
-            href="/login"
-            className="text-xs text-muted-foreground/60 transition hover:text-tierra"
-          >
-            Administración
-          </Link>
-        </footer>
       </main>
     </>
   );
