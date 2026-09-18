@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AlbumWelcome } from "@/components/album-welcome";
 import { BrandLockup } from "@/components/brand-lockup";
@@ -73,6 +74,15 @@ export default async function StickerAlbumPage(
           slug={album.slug}
           stickerCode={code}
         />
+
+        <footer className="pb-6 pt-2 text-center">
+          <Link
+            href="/login"
+            className="text-xs text-muted-foreground/60 transition hover:text-tierra"
+          >
+            Administración
+          </Link>
+        </footer>
       </main>
     </>
   );
