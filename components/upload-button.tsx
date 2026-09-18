@@ -13,9 +13,14 @@ import {
 type UploadButtonProps = {
   albumId: string;
   slug: string;
+  stickerCode: string;
 };
 
-export function UploadButton({ albumId, slug }: UploadButtonProps) {
+export function UploadButton({
+  albumId,
+  slug,
+  stickerCode,
+}: UploadButtonProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState<{
@@ -40,39 +45,69 @@ export function UploadButton({ albumId, slug }: UploadButtonProps) {
       setError(
         "Solo valen fotos (JPEG, PNG, WebP, HEIC o GIF) de hasta 10 MB.",
       );
-      if (inputRef.current) inputRef.current.value = "";
+
+      if (inputRef.current) {
+        inputRef.current.value = "";
+      }
+
       return;
     }
 
     setUploading(true);
-    setProgress({ done: 0, total: validFiles.length });
+    setProgress({
+      done: 0,
+      total: validFiles.length,
+    });
 
     const supabase = createClient();
 
     for (const file of validFiles) {
       const ext = extensionFromMimeType(file.type);
-      const path = `${albumId}/${crypto.randomUUID()}.${ext}`;
+      const path = `${stickerCode}/${crypto.randomUUID()}.${ext}`;
 
       const { error: uploadError } = await supabase.storage
         .from(MEDIA_BUCKET)
-        .upload(path, file, { contentType: file.type });
+        .upload(path, file, {
+          contentType: file.type,
+        });
 
       if (!uploadError) {
         try {
-          await registerMedia(albumId, slug, path, file.type);
-        } catch {
-          setError("No se ha podido guardar alguna foto. Prueba otra vez.");
+          await registerMedia(
+            albumId,
+            slug,
+            path,
+            file.type,
+          );
+        } catch (error) {
+          setError(
+            error instanceof Error
+              ? error.message
+              : "No se ha podido guardar alguna foto.",
+          );
         }
       } else {
-        setError("No se ha podido guardar alguna foto. Prueba otra vez.");
+        setError(
+          `Error Storage: ${uploadError.message}`,
+        );
       }
 
-      setProgress((prev) => (prev ? { ...prev, done: prev.done + 1 } : prev));
+      setProgress((prev) =>
+        prev
+          ? {
+              ...prev,
+              done: prev.done + 1,
+            }
+          : prev,
+      );
     }
 
     setUploading(false);
     setProgress(null);
-    if (inputRef.current) inputRef.current.value = "";
+
+    if (inputRef.current) {
+      inputRef.current.value = "";
+    }
   }
 
   return (
@@ -85,6 +120,7 @@ export function UploadButton({ albumId, slug }: UploadButtonProps) {
           {error}
         </p>
       ) : null}
+
       <input
         ref={inputRef}
         type="file"
@@ -93,6 +129,7 @@ export function UploadButton({ albumId, slug }: UploadButtonProps) {
         className="hidden"
         onChange={(e) => handleFiles(e.target.files)}
       />
+
       <button
         type="button"
         onClick={() => inputRef.current?.click()}

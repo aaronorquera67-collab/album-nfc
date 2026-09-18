@@ -1,8 +1,23 @@
 "use server";
 
+import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { MEDIA_BUCKET } from "@/lib/storage";
+
+async function requireAdmin() {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  return supabase;
+}
 
 export async function registerMedia(
   albumId: string,
@@ -12,27 +27,19 @@ export async function registerMedia(
 ) {
   const supabase = await createClient();
 
-  const { error } = await supabase.from("media").insert({
-    album_id: albumId,
-    storage_path: storagePath,
-    mime_type: mimeType,
-  });
+  const { error } = await supabase.rpc(
+    "register_media_for_sticker",
+    {
+      p_album_id: albumId,
+      p_storage_path: storagePath,
+      p_mime_type: mimeType,
+    },
+  );
 
   if (error) {
-    throw new Error("No se pudo guardar la foto.");
-  }
-
-  const { data: album } = await supabase
-    .from("albums")
-    .select("cover_path")
-    .eq("id", albumId)
-    .single();
-
-  if (album && !album.cover_path) {
-    await supabase
-      .from("albums")
-      .update({ cover_path: storagePath })
-      .eq("id", albumId);
+    throw new Error(
+      `No se pudo guardar la foto: ${error.message}`,
+    );
   }
 
   revalidatePath("/app");
@@ -44,15 +51,20 @@ export async function setAlbumCover(
   storagePath: string,
   slug: string,
 ) {
-  const supabase = await createClient();
+  const supabase = await requireAdmin();
 
-  const { error } = await supabase
-    .from("albums")
-    .update({ cover_path: storagePath })
-    .eq("id", albumId);
+  const { error } = await supabase.rpc(
+    "set_album_cover_for_sticker",
+    {
+      p_album_id: albumId,
+      p_storage_path: storagePath,
+    },
+  );
 
   if (error) {
-    throw new Error("No se pudo actualizar la portada.");
+    throw new Error(
+      `No se pudo actualizar la portada: ${error.message}`,
+    );
   }
 
   revalidatePath("/app");
@@ -65,30 +77,33 @@ export async function deleteMedia(
   albumId: string,
   slug: string,
 ) {
-  const supabase = await createClient();
+  const supabase = await requireAdmin();
 
-  await supabase.storage.from(MEDIA_BUCKET).remove([storagePath]);
-  await supabase.from("media").delete().eq("id", mediaId);
+  // Primero eliminamos el archivo físico de Storage.
+  const { error: storageError } = await supabase.storage
+    .from(MEDIA_BUCKET)
+    .remove([storagePath]);
 
-  const { data: album } = await supabase
-    .from("albums")
-    .select("cover_path")
-    .eq("id", albumId)
-    .single();
+  if (storageError) {
+    throw new Error(
+      `No se pudo eliminar la foto: ${storageError.message}`,
+    );
+  }
 
-  if (album && album.cover_path === storagePath) {
-    const { data: nextMedia } = await supabase
-      .from("media")
-      .select("storage_path")
-      .eq("album_id", albumId)
-      .order("created_at", { ascending: true })
-      .limit(1)
-      .maybeSingle();
+  // Después eliminamos el registro mediante la función segura.
+  const { error } = await supabase.rpc(
+    "delete_media_for_sticker",
+    {
+      p_media_id: mediaId,
+      p_album_id: albumId,
+      p_storage_path: storagePath,
+    },
+  );
 
-    await supabase
-      .from("albums")
-      .update({ cover_path: nextMedia?.storage_path ?? null })
-      .eq("id", albumId);
+  if (error) {
+    throw new Error(
+      `No se pudo eliminar la foto: ${error.message}`,
+    );
   }
 
   revalidatePath("/app");

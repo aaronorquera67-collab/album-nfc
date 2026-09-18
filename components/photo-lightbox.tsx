@@ -7,7 +7,6 @@ import {
   motion,
   type PanInfo,
 } from "motion/react";
-import { publicMediaUrl } from "@/lib/storage";
 import type { Media } from "@/lib/types";
 
 const SWIPE_OFFSET = 80;
@@ -33,6 +32,7 @@ type PhotoLightboxProps = {
   index: number;
   direction: number;
   coverPath: string | null;
+  isAdmin: boolean;
   isSettingCover: boolean;
   justSetCover: boolean;
   onIndexChange: (nextIndex: number, direction: number) => void;
@@ -46,6 +46,7 @@ export function PhotoLightbox({
   index,
   direction,
   coverPath,
+  isAdmin,
   isSettingCover,
   justSetCover,
   onIndexChange,
@@ -76,10 +77,12 @@ export function PhotoLightbox({
         onClose();
         return;
       }
+
       if (event.key === "ArrowLeft") {
         event.preventDefault();
         goTo(index - 1, -1);
       }
+
       if (event.key === "ArrowRight") {
         event.preventDefault();
         goTo(index + 1, 1);
@@ -87,6 +90,7 @@ export function PhotoLightbox({
     }
 
     window.addEventListener("keydown", onKeyDown);
+
     return () => {
       document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", onKeyDown);
@@ -95,7 +99,9 @@ export function PhotoLightbox({
 
   function onDragEnd(_: unknown, info: PanInfo) {
     if (dragLock.current) return;
+
     const { offset, velocity } = info;
+
     const swipe =
       Math.abs(offset.x) > SWIPE_OFFSET ||
       Math.abs(velocity.x) > SWIPE_VELOCITY;
@@ -103,11 +109,13 @@ export function PhotoLightbox({
     if (!swipe) return;
 
     dragLock.current = true;
+
     if (offset.x < 0 || velocity.x < 0) {
       goTo(index + 1, 1);
     } else {
       goTo(index - 1, -1);
     }
+
     window.setTimeout(() => {
       dragLock.current = false;
     }, 280);
@@ -133,6 +141,7 @@ export function PhotoLightbox({
         <p className="text-sm font-medium tabular-nums text-blanco/70">
           {index + 1} / {media.length}
         </p>
+
         <button
           type="button"
           onClick={onClose}
@@ -154,6 +163,7 @@ export function PhotoLightbox({
             ‹
           </button>
         ) : null}
+
         {canNext ? (
           <button
             type="button"
@@ -166,7 +176,11 @@ export function PhotoLightbox({
         ) : null}
 
         <div className="relative h-full w-full max-w-4xl overflow-hidden">
-          <AnimatePresence initial={false} custom={direction} mode="popLayout">
+          <AnimatePresence
+            initial={false}
+            custom={direction}
+            mode="popLayout"
+          >
             <motion.div
               key={item.id}
               custom={direction}
@@ -174,7 +188,10 @@ export function PhotoLightbox({
               initial="enter"
               animate="center"
               exit="exit"
-              transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+              transition={{
+                duration: 0.28,
+                ease: [0.22, 1, 0.36, 1],
+              }}
               drag="x"
               dragConstraints={{ left: 0, right: 0 }}
               dragElastic={0.18}
@@ -182,56 +199,70 @@ export function PhotoLightbox({
               className="absolute inset-0 flex cursor-grab touch-pan-y items-center justify-center active:cursor-grabbing"
             >
               <div className="relative h-full w-full">
-                <Image
-                  src={publicMediaUrl(item.storage_path)}
-                  alt={`Foto ${index + 1} del álbum`}
-                  fill
-                  priority
-                  sizes="100vw"
-                  className="pointer-events-none select-none object-contain"
-                  draggable={false}
-                />
+                {item.signed_url ? (
+                  <Image
+                    src={item.signed_url}
+                    alt={`Foto ${index + 1} del álbum`}
+                    fill
+                    priority
+                    sizes="100vw"
+                    className="pointer-events-none select-none object-contain"
+                    draggable={false}
+                  />
+                ) : (
+                  <div className="flex h-full items-center justify-center text-blanco/60">
+                    Foto no disponible
+                  </div>
+                )}
               </div>
             </motion.div>
           </AnimatePresence>
         </div>
 
-        {/* Prefetch vecinos (ocultos) */}
-        <div className="pointer-events-none absolute h-0 w-0 overflow-hidden opacity-0" aria-hidden>
-          {neighborIndexes.map((i) => (
-            <Image
-              key={media[i].id}
-              src={publicMediaUrl(media[i].storage_path)}
-              alt=""
-              width={32}
-              height={32}
-            />
-          ))}
+        <div
+          className="pointer-events-none absolute h-0 w-0 overflow-hidden opacity-0"
+          aria-hidden
+        >
+          {neighborIndexes.map((i) =>
+            media[i].signed_url ? (
+              <Image
+                key={media[i].id}
+                src={media[i].signed_url!}
+                alt=""
+                width={32}
+                height={32}
+              />
+            ) : null,
+          )}
         </div>
       </div>
 
       <div className="relative z-20 shrink-0 border-t border-blanco/10 bg-piedra/80 px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-3 backdrop-blur-sm">
-        <div className="mx-auto flex w-full max-w-md flex-col gap-2 sm:flex-row sm:justify-center">
-          <button
-            type="button"
-            onClick={() => onSetCover(item)}
-            disabled={isCover || isSettingCover}
-            className="inline-flex h-12 min-h-[44px] w-full items-center justify-center rounded-full border border-tierra bg-tierra/20 px-5 text-base font-semibold text-blanco transition-transform duration-150 hover:bg-tierra/30 active:scale-95 disabled:cursor-default disabled:border-blanco/20 disabled:bg-transparent disabled:text-blanco/45 disabled:active:scale-100 sm:h-11 sm:w-auto sm:text-sm"
-          >
-            {isCover
-              ? "Es la portada"
-              : isSettingCover
-                ? "Guardando…"
-                : "Usar de portada"}
-          </button>
-          <button
-            type="button"
-            onClick={() => onRequestDelete(item)}
-            className="inline-flex h-12 min-h-[44px] w-full items-center justify-center rounded-full bg-lust px-5 text-base font-semibold text-blanco transition-transform duration-150 hover:opacity-90 active:scale-95 sm:h-11 sm:w-auto sm:text-sm"
-          >
-            Borrar foto
-          </button>
-        </div>
+        {isAdmin ? (
+          <div className="mx-auto flex w-full max-w-md flex-col gap-2 sm:flex-row sm:justify-center">
+            <button
+              type="button"
+              onClick={() => onSetCover(item)}
+              disabled={isCover || isSettingCover}
+              className="inline-flex h-12 min-h-[44px] w-full items-center justify-center rounded-full border border-tierra bg-tierra/20 px-5 text-base font-semibold text-blanco transition-transform duration-150 hover:bg-tierra/30 active:scale-95 disabled:cursor-default disabled:border-blanco/20 disabled:bg-transparent disabled:text-blanco/45 disabled:active:scale-100 sm:h-11 sm:w-auto sm:text-sm"
+            >
+              {isCover
+                ? "Es la portada"
+                : isSettingCover
+                  ? "Guardando…"
+                  : "Usar de portada"}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => onRequestDelete(item)}
+              className="inline-flex h-12 min-h-[44px] w-full items-center justify-center rounded-full bg-lust px-5 text-base font-semibold text-blanco transition-transform duration-150 hover:opacity-90 active:scale-95 sm:h-11 sm:w-auto sm:text-sm"
+            >
+              Borrar foto
+            </button>
+          </div>
+        ) : null}
+
         {justSetCover ? (
           <motion.p
             initial={{ opacity: 0, y: -4 }}
