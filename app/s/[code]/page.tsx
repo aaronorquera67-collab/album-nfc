@@ -7,6 +7,8 @@ import { UploadButton } from "@/components/upload-button";
 import { getAlbumBySticker } from "@/lib/albums";
 import { createClient } from "@/lib/supabase/server";
 
+const MAX_PHOTOS = 20;
+
 export default async function StickerAlbumPage(
   props: PageProps<"/s/[code]">,
 ) {
@@ -27,6 +29,17 @@ export default async function StickerAlbumPage(
   }
 
   const { album, media } = result;
+
+  const photoCount = media.length;
+
+  console.log(
+    "CONTADOR:",
+    photoCount,
+    "MAX:",
+    MAX_PHOTOS,
+  );
+
+  const albumFull = photoCount >= MAX_PHOTOS;
 
   return (
     <>
@@ -67,6 +80,24 @@ export default async function StickerAlbumPage(
             <h1 className="mt-2 break-words text-[clamp(1.5rem,6vw,3rem)] font-semibold leading-tight text-foreground">
               {album.name}
             </h1>
+
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <span className="rounded-full bg-tierra/10 px-3 py-1 text-xs font-semibold text-tierra">
+                ❤️ {photoCount} / {MAX_PHOTOS} recuerdos
+              </span>
+
+              {albumFull ? (
+                <span className="rounded-full bg-bosque/10 px-3 py-1 text-xs font-semibold text-bosque">
+                  🔒 Álbum completo
+                </span>
+              ) : null}
+            </div>
+
+            {!albumFull && photoCount >= 17 ? (
+              <p className="mt-2 text-xs text-muted-foreground">
+                Te quedan {MAX_PHOTOS - photoCount} recuerdos por guardar.
+              </p>
+            ) : null}
           </div>
         </div>
 
@@ -82,6 +113,8 @@ export default async function StickerAlbumPage(
           albumId={album.id}
           slug={album.slug}
           stickerCode={code}
+          photoCount={photoCount}
+          maxPhotos={MAX_PHOTOS}
         />
       </main>
     </>

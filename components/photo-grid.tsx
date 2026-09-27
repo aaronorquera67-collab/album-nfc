@@ -17,6 +17,16 @@ type PhotoGridProps = {
   isAdmin: boolean;
 };
 
+function formatUploadDate(dateString: string) {
+  return new Intl.DateTimeFormat("es-AR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(dateString));
+}
+
 export function PhotoGrid({
   media,
   albumId,
@@ -24,14 +34,26 @@ export function PhotoGrid({
   coverPath,
   isAdmin,
 }: PhotoGridProps) {
-  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
-  const [direction, setDirection] = useState(0);
-  const [confirmingId, setConfirmingId] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
-  const [isSettingCover, startCoverTransition] = useTransition();
-  const [justSetCover, setJustSetCover] = useState(false);
+  const [selectedIndex, setSelectedIndex] =
+    useState<number | null>(null);
 
-  const confirming = media.find((m) => m.id === confirmingId) ?? null;
+  const [direction, setDirection] = useState(0);
+
+  const [confirmingId, setConfirmingId] =
+    useState<string | null>(null);
+
+  const [isPending, startTransition] =
+    useTransition();
+
+  const [isSettingCover, startCoverTransition] =
+    useTransition();
+
+  const [justSetCover, setJustSetCover] =
+    useState(false);
+
+  const confirming =
+    media.find((m) => m.id === confirmingId) ??
+    null;
 
   const lightboxOpen =
     selectedIndex !== null &&
@@ -47,7 +69,9 @@ export function PhotoGrid({
   }
 
   function handleDelete(item: Media) {
-    const deleteIndex = media.findIndex((m) => m.id === item.id);
+    const deleteIndex = media.findIndex(
+      (m) => m.id === item.id,
+    );
 
     startTransition(async () => {
       await deleteMedia(
@@ -105,7 +129,7 @@ export function PhotoGrid({
   return (
     <>
       <motion.div
-        className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3 md:grid-cols-4"
+        className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-4"
         initial="hidden"
         animate="show"
         variants={{
@@ -118,14 +142,9 @@ export function PhotoGrid({
         }}
       >
         {media.map((item, i) => (
-          <motion.button
+          <motion.div
             key={item.id}
-            type="button"
-            onClick={() => {
-              setDirection(0);
-              setSelectedIndex(i);
-            }}
-            className="group relative aspect-square min-h-[44px] overflow-hidden rounded-2xl border border-surface-border bg-surface transition-transform duration-150 active:scale-[0.98]"
+            className="flex min-w-0 flex-col gap-1.5"
             variants={{
               hidden: {
                 opacity: 0,
@@ -141,31 +160,45 @@ export function PhotoGrid({
               ease: "easeOut",
             }}
           >
-            {item.signed_url ? (
-              <Image
-                src={item.signed_url}
-                alt="Foto del álbum"
-                fill
-                sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                className="object-cover transition-transform duration-300 ease-out group-hover:scale-105"
-              />
-            ) : (
-              <div className="absolute inset-0 flex items-center justify-center text-sm text-foreground/50">
-                Foto no disponible
-              </div>
-            )}
+            <motion.button
+              type="button"
+              onClick={() => {
+                setDirection(0);
+                setSelectedIndex(i);
+              }}
+              className="group relative aspect-square min-h-[44px] overflow-hidden rounded-2xl border border-surface-border bg-surface transition-transform duration-150 active:scale-[0.98]"
+            >
+              {item.signed_url ? (
+                <Image
+                  src={item.signed_url}
+                  alt="Foto del álbum"
+                  fill
+                  sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                  className="object-cover transition-transform duration-300 ease-out group-hover:scale-105"
+                />
+              ) : (
+                <div className="absolute inset-0 flex items-center justify-center text-sm text-foreground/50">
+                  Foto no disponible
+                </div>
+              )}
 
-            {item.storage_path === coverPath ? (
-              <span className="absolute left-2 top-2 rounded-full border border-surface-border bg-blanco/90 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-tierra">
-                Portada
-              </span>
-            ) : null}
-          </motion.button>
+              {item.storage_path === coverPath ? (
+                <span className="absolute left-2 top-2 rounded-full border border-surface-border bg-blanco/90 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-tierra">
+                  Portada
+                </span>
+              ) : null}
+            </motion.button>
+
+            <p className="px-1 text-[10px] leading-tight text-muted-foreground">
+              {formatUploadDate(item.created_at)}
+            </p>
+          </motion.div>
         ))}
       </motion.div>
 
       <AnimatePresence>
-        {lightboxOpen && selectedIndex !== null ? (
+        {lightboxOpen &&
+        selectedIndex !== null ? (
           <PhotoLightbox
             key="photo-lightbox"
             media={media}
@@ -191,9 +224,12 @@ export function PhotoGrid({
         description="Se quita del álbum y no se puede recuperar."
         pending={isPending}
         onConfirm={() =>
-          confirming && handleDelete(confirming)
+          confirming &&
+          handleDelete(confirming)
         }
-        onCancel={() => setConfirmingId(null)}
+        onCancel={() =>
+          setConfirmingId(null)
+        }
       />
     </>
   );

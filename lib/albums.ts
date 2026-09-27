@@ -9,12 +9,20 @@ async function addSignedUrls(
 ): Promise<Media[]> {
   return Promise.all(
     media.map(async (item) => {
-      const { data } = await supabase.storage
+      const { data, error } = await supabase.storage
         .from("media")
         .createSignedUrl(
           item.storage_path,
           SIGNED_URL_SECONDS,
         );
+
+      if (error) {
+        console.error(
+          "ERROR createSignedUrl:",
+          item.storage_path,
+          error,
+        );
+      }
 
       return {
         ...item,
@@ -35,12 +43,20 @@ async function addSignedCoverUrl(
     };
   }
 
-  const { data } = await supabase.storage
+  const { data, error } = await supabase.storage
     .from("media")
     .createSignedUrl(
       album.cover_path,
       SIGNED_URL_SECONDS,
     );
+
+  if (error) {
+    console.error(
+      "ERROR createSignedCoverUrl:",
+      album.cover_path,
+      error,
+    );
+  }
 
   return {
     ...album,
@@ -57,6 +73,10 @@ export async function getAlbums(): Promise<AlbumWithCount[]> {
     );
 
     if (error || !data) {
+      console.error(
+        "ERROR get_all_albums_for_app:",
+        error,
+      );
       return [];
     }
 
@@ -66,22 +86,40 @@ export async function getAlbums(): Promise<AlbumWithCount[]> {
       rows.map(async (row: Album) => {
         const album = row;
 
-        const { data: stickerCode } = await supabase.rpc(
-          "get_sticker_code_by_album",
-          {
-            p_album_id: album.id,
-          },
-        );
+        const { data: stickerCode, error: stickerError } =
+          await supabase.rpc(
+            "get_sticker_code_by_album",
+            {
+              p_album_id: album.id,
+            },
+          );
+
+        if (stickerError) {
+          console.error(
+            "ERROR get_sticker_code_by_album:",
+            stickerError,
+          );
+        }
 
         let mediaCount = 0;
 
         if (stickerCode) {
-          const { data: mediaData } = await supabase.rpc(
+          const {
+            data: mediaData,
+            error: mediaError,
+          } = await supabase.rpc(
             "get_media_by_sticker",
             {
               p_code: stickerCode,
             },
           );
+
+          if (mediaError) {
+            console.error(
+              "ERROR get_media_by_sticker:",
+              mediaError,
+            );
+          }
 
           mediaCount = mediaData?.length ?? 0;
         }
@@ -100,7 +138,8 @@ export async function getAlbums(): Promise<AlbumWithCount[]> {
     );
 
     return albums;
-  } catch {
+  } catch (error) {
+    console.error("ERROR getAlbums:", error);
     return [];
   }
 }
@@ -109,23 +148,40 @@ export async function getAlbumBySlug(slug: string) {
   try {
     const supabase = await createClient();
 
-    const { data: albumData, error } = await supabase
+    const {
+      data: albumData,
+      error,
+    } = await supabase
       .from("albums")
       .select("*")
       .eq("slug", slug)
       .maybeSingle();
 
     if (error || !albumData) {
+      console.error(
+        "ERROR getAlbumBySlug album:",
+        error,
+      );
       return null;
     }
 
     const album = albumData as Album;
 
-    const { data: mediaData } = await supabase
-      .from("media")
-      .select("*")
-      .eq("album_id", album.id)
-      .order("created_at", { ascending: false });
+    const { data: mediaData, error: mediaError } =
+      await supabase
+        .from("media")
+        .select("*")
+        .eq("album_id", album.id)
+        .order("created_at", {
+          ascending: false,
+        });
+
+    if (mediaError) {
+      console.error(
+        "ERROR getAlbumBySlug media:",
+        mediaError,
+      );
+    }
 
     const media = (mediaData ?? []).map((item) => ({
       ...(item as Media),
@@ -137,42 +193,88 @@ export async function getAlbumBySlug(slug: string) {
       media,
     );
 
-    const albumWithCover = await addSignedCoverUrl(
-      supabase,
-      album,
-    );
+    const albumWithCover =
+      await addSignedCoverUrl(
+        supabase,
+        album,
+      );
 
     return {
       album: albumWithCover,
       media: signedMedia,
     };
-  } catch {
+  } catch (error) {
+    console.error(
+      "ERROR getAlbumBySlug:",
+      error,
+    );
     return null;
   }
 }
 
-export async function getAlbumBySticker(code: string) {
+export async function getAlbumBySticker(
+  code: string,
+) {
   try {
     const supabase = await createClient();
 
-    const { data: albumData, error } = await supabase
+    console.log(
+      "BUSCANDO STICKER:",
+      code,
+    );
+
+    const {
+      data: albumData,
+      error: albumError,
+    } = await supabase
       .rpc("get_album_by_sticker", {
         p_code: code,
       })
       .maybeSingle();
 
-    if (error || !albumData) {
+    console.log(
+      "RESULTADO ALBUM:",
+      albumData,
+    );
+
+    if (albumError) {
+      console.error(
+        "ERROR get_album_by_sticker:",
+        albumError,
+      );
+      return null;
+    }
+
+    if (!albumData) {
+      console.error(
+        "NO SE ENCONTRO EL ALBUM PARA EL STICKER:",
+        code,
+      );
       return null;
     }
 
     const album = albumData as Album;
 
-    const { data: mediaData, error: mediaError } =
-      await supabase.rpc("get_media_by_sticker", {
+    const {
+      data: mediaData,
+      error: mediaError,
+    } = await supabase.rpc(
+      "get_media_by_sticker",
+      {
         p_code: code,
-      });
+      },
+    );
+
+    console.log(
+      "RESULTADO MEDIA:",
+      mediaData,
+    );
 
     if (mediaError) {
+      console.error(
+        "ERROR get_media_by_sticker:",
+        mediaError,
+      );
       return null;
     }
 
@@ -183,21 +285,27 @@ export async function getAlbumBySticker(code: string) {
       }),
     );
 
-    const signedMedia = await addSignedUrls(
-      supabase,
-      media,
-    );
+    const signedMedia =
+      await addSignedUrls(
+        supabase,
+        media,
+      );
 
-    const albumWithCover = await addSignedCoverUrl(
-      supabase,
-      album,
-    );
+    const albumWithCover =
+      await addSignedCoverUrl(
+        supabase,
+        album,
+      );
 
     return {
       album: albumWithCover,
       media: signedMedia,
     };
-  } catch {
+  } catch (error) {
+    console.error(
+      "ERROR getAlbumBySticker:",
+      error,
+    );
     return null;
   }
 }

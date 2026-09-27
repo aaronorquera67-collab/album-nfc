@@ -1,14 +1,27 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "motion/react";
+import { deleteAlbum } from "@/app/actions/albums";
 import type { AlbumWithCount } from "@/lib/types";
 
-export function AlbumCard({ album }: { album: AlbumWithCount }) {
-  const [generatedLink, setGeneratedLink] = useState<string | null>(null);
+export function AlbumCard({
+  album,
+}: {
+  album: AlbumWithCount;
+}) {
+  const [generatedLink, setGeneratedLink] =
+    useState<string | null>(null);
+
   const [copied, setCopied] = useState(false);
+
+  const [confirmingDelete, setConfirmingDelete] =
+    useState(false);
+
+  const [isDeleting, startDeleteTransition] =
+    useTransition();
 
   function generateNfcLink() {
     const link = `${window.location.origin}/s/${album.sticker_code}`;
@@ -21,7 +34,10 @@ export function AlbumCard({ album }: { album: AlbumWithCount }) {
     if (!generatedLink) return;
 
     try {
-      await navigator.clipboard.writeText(generatedLink);
+      await navigator.clipboard.writeText(
+        generatedLink,
+      );
+
       setCopied(true);
 
       setTimeout(() => {
@@ -32,13 +48,33 @@ export function AlbumCard({ album }: { album: AlbumWithCount }) {
     }
   }
 
+  function handleDelete() {
+    startDeleteTransition(async () => {
+      await deleteAlbum(
+        album.id,
+        album.slug,
+      );
+    });
+  }
+
   return (
     <motion.div
       variants={{
-        hidden: { opacity: 0, y: 24, scale: 0.97 },
-        show: { opacity: 1, y: 0, scale: 1 },
+        hidden: {
+          opacity: 0,
+          y: 24,
+          scale: 0.97,
+        },
+        show: {
+          opacity: 1,
+          y: 0,
+          scale: 1,
+        },
       }}
-      transition={{ duration: 0.5, ease: "easeOut" }}
+      transition={{
+        duration: 0.5,
+        ease: "easeOut",
+      }}
       whileHover={{ y: -4 }}
       className="h-full"
     >
@@ -75,7 +111,9 @@ export function AlbumCard({ album }: { album: AlbumWithCount }) {
 
           <p className="mt-0.5 truncate text-[11px] text-blanco/75 sm:text-sm">
             {album.country_name} · {album.media_count}{" "}
-            {album.media_count === 1 ? "foto" : "fotos"}
+            {album.media_count === 1
+              ? "foto"
+              : "fotos"}
           </p>
         </div>
       </Link>
@@ -101,10 +139,59 @@ export function AlbumCard({ album }: { album: AlbumWithCount }) {
               onClick={copyNfcLink}
               className="mt-2 inline-flex min-h-[38px] w-full items-center justify-center rounded-full bg-tierra px-4 text-xs font-semibold text-blanco transition hover:opacity-90 active:scale-[0.98]"
             >
-              {copied ? "✓ Link copiado" : "Copiar link"}
+              {copied
+                ? "✓ Link copiado"
+                : "Copiar link"}
             </button>
           </div>
         ) : null}
+
+        {!confirmingDelete ? (
+          <button
+            type="button"
+            onClick={() =>
+              setConfirmingDelete(true)
+            }
+            className="inline-flex min-h-[42px] w-full items-center justify-center rounded-full border border-lust/30 bg-lust/5 px-4 text-sm font-semibold text-lust transition hover:bg-lust/10 active:scale-[0.98]"
+          >
+            🗑️ Eliminar álbum
+          </button>
+        ) : (
+          <div className="rounded-2xl border border-lust/20 bg-lust/5 p-3">
+            <p className="text-center text-sm font-semibold text-foreground">
+              ¿Eliminar "{album.name}"?
+            </p>
+
+            <p className="mt-1 text-center text-xs leading-relaxed text-muted-foreground">
+              Se eliminarán todas las fotos y el
+              álbum. Esta acción no se puede deshacer.
+            </p>
+
+            <div className="mt-3 flex gap-2">
+              <button
+                type="button"
+                onClick={() =>
+                  setConfirmingDelete(false)
+                }
+                disabled={isDeleting}
+                className="inline-flex min-h-[40px] flex-1 items-center justify-center rounded-full border border-surface-border bg-surface px-3 text-xs font-semibold text-foreground transition hover:bg-surface/70 disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={isDeleting}
+                className="inline-flex min-h-[40px] flex-1 items-center justify-center rounded-full bg-lust px-3 text-xs font-semibold text-blanco transition hover:opacity-90 disabled:opacity-60"
+              >
+                {isDeleting
+                  ? "Eliminando..."
+                  : "Sí, eliminar"}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </motion.div>
   );
