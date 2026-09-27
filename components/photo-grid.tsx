@@ -13,6 +13,7 @@ type PhotoGridProps = {
   media: Media[];
   albumId: string;
   slug: string;
+  stickerCode: string;
   coverPath: string | null;
   isAdmin: boolean;
 };
@@ -31,6 +32,7 @@ export function PhotoGrid({
   media,
   albumId,
   slug,
+  stickerCode,
   coverPath,
   isAdmin,
 }: PhotoGridProps) {
@@ -79,6 +81,7 @@ export function PhotoGrid({
         item.storage_path,
         albumId,
         slug,
+        stickerCode,
       );
 
       setConfirmingId(null);

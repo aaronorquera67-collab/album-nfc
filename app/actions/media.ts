@@ -76,10 +76,10 @@ export async function deleteMedia(
   storagePath: string,
   albumId: string,
   slug: string,
+  stickerCode: string,
 ) {
-  const supabase = await requireAdmin();
+  const supabase = await createClient();
 
-  // Primero eliminamos el archivo físico de Storage.
   const { error: storageError } = await supabase.storage
     .from(MEDIA_BUCKET)
     .remove([storagePath]);
@@ -90,13 +90,13 @@ export async function deleteMedia(
     );
   }
 
-  // Después eliminamos el registro mediante la función segura.
   const { error } = await supabase.rpc(
     "delete_media_for_sticker",
     {
       p_media_id: mediaId,
       p_album_id: albumId,
       p_storage_path: storagePath,
+      p_sticker_code: stickerCode,
     },
   );
 
@@ -108,4 +108,5 @@ export async function deleteMedia(
 
   revalidatePath("/app");
   revalidatePath(`/album/${slug}`);
+  revalidatePath(`/s/${stickerCode}`);
 }

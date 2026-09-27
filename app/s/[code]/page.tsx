@@ -142,6 +142,7 @@ export default async function StickerAlbumPage(
           media={media}
           albumId={album.id}
           slug={album.slug}
+          stickerCode={code}
           coverPath={album.cover_path}
           isAdmin={isAdmin}
         />
