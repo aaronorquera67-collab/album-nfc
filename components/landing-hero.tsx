@@ -23,7 +23,9 @@ function HeroVideoCard({ video }: { video: ProjectVideo }) {
         sizes="(max-width: 768px) 45vw, 22vw"
         className="object-cover transition-transform duration-500 ease-out group-hover:scale-105"
       />
+
       <div className="absolute inset-0 bg-gradient-to-t from-piedra/65 via-piedra/10 to-transparent" />
+
       <span
         aria-hidden
         className="absolute inset-0 flex items-center justify-center"
@@ -38,9 +40,11 @@ function HeroVideoCard({ video }: { video: ProjectVideo }) {
           </svg>
         </span>
       </span>
+
       <span className="absolute left-2 top-2 rounded-full border border-blanco/20 bg-piedra/55 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-blanco backdrop-blur-sm sm:left-3 sm:top-3 sm:px-2.5 sm:py-1 sm:text-[11px]">
         {video.label}
       </span>
+
       <span className="absolute inset-x-2 bottom-2 rounded-full border border-blanco/15 bg-piedra/60 px-2 py-1 text-center text-[10px] font-medium text-blanco backdrop-blur-sm sm:inset-x-3 sm:bottom-3 sm:px-2.5 sm:py-1.5 sm:text-xs">
         {video.viewsLabel}
       </span>
@@ -48,7 +52,11 @@ function HeroVideoCard({ video }: { video: ProjectVideo }) {
   );
 }
 
-export function LandingHero() {
+export function LandingHero({
+  showAdminButton,
+}: {
+  showAdminButton: boolean;
+}) {
   const reduce = useReducedMotion();
 
   return (
@@ -74,14 +82,20 @@ export function LandingHero() {
             apetezca, sin buscar entre carpetas.
           </motion.p>
 
-          <motion.div
-            className="w-full sm:w-auto"
-            initial={reduce ? false : { opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2, ease: "easeOut" }}
-          >
-            <LandingCtaLink className="w-full sm:w-auto" />
-          </motion.div>
+          {showAdminButton ? (
+            <motion.div
+              className="w-full sm:w-auto"
+              initial={reduce ? false : { opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{
+                duration: 0.5,
+                delay: 0.2,
+                ease: "easeOut",
+              }}
+            >
+              <LandingCtaLink className="w-full sm:w-auto" />
+            </motion.div>
+          ) : null}
         </div>
 
         <motion.div

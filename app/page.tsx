@@ -7,6 +7,7 @@ import { LandingHow } from "@/components/landing-how";
 import { LandingMoments } from "@/components/landing-moments";
 import { LandingProblem } from "@/components/landing-problem";
 import { LandingProduct } from "@/components/landing-product";
+import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
   title: "Album NFC — Tus recuerdos, a un toque",
@@ -14,10 +15,16 @@ export const metadata: Metadata = {
     "Acerca el móvil a un imán de nevera y salen las fotos de ese viaje. Sin cuenta ni apps que instalar.",
 };
 
-export default function LandingPage() {
+export default async function LandingPage() {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   return (
     <>
-      <LandingHero />
+      <LandingHero showAdminButton={!!user} />
       <LandingProblem />
       <LandingProduct />
       <LandingHow />
