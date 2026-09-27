@@ -60,63 +60,75 @@ export function SpotifyPlayer({
     return null;
   }
 
-  if (expanded) {
-    return (
-      <div className="absolute bottom-4 left-3 right-3 z-[50] overflow-hidden rounded-2xl border border-white/20 bg-[#121212] shadow-2xl sm:left-auto sm:right-5 sm:w-[360px]">
-        <div className="flex items-center justify-between px-3 py-2">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/60">
-            🎵 Canción del recuerdo
-          </p>
+  function openPlayer() {
+    onActivate();
+    setExpanded(true);
+  }
 
-          <button
-            type="button"
-            onClick={() => setExpanded(false)}
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-sm text-white"
-            aria-label="Cerrar reproductor"
-          >
-            ✕
-          </button>
-        </div>
-
-        <iframe
-          src={embedUrl}
-          width="100%"
-          height="152"
-          frameBorder="0"
-          allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-          loading="eager"
-          title="Canción del recuerdo"
-          className="block w-full"
-        />
-      </div>
-    );
+  function closePlayer() {
+    setExpanded(false);
   }
 
   return (
-    <button
-      type="button"
-      onClick={() => {
-        onActivate();
-        setExpanded(true);
-      }}
-      aria-label="Abrir Spotify"
-      className="absolute bottom-4 right-4 z-[50] flex h-14 w-14 items-center justify-center rounded-2xl border-2 border-white bg-[#121212] shadow-2xl transition-transform active:scale-95 sm:h-auto sm:w-auto sm:gap-2 sm:p-1.5 sm:pr-3"
-    >
-      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white">
-        <span className="ml-1 text-base text-black">
-          ▶
-        </span>
-      </div>
+    <>
+      {/* MINI REPRODUCTOR */}
+      {expanded ? (
+        <div className="absolute bottom-4 right-4 z-[50] w-[calc(100%-2rem)] max-w-[340px] overflow-hidden rounded-2xl border border-white/15 bg-[#121212] shadow-2xl sm:bottom-5 sm:right-5 sm:w-[340px]">
+          <div className="flex items-center justify-between px-3 py-2.5">
+            <div className="flex min-w-0 items-center gap-2">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#1DB954]">
+                <span className="text-sm font-bold text-black">
+                  ♪
+                </span>
+              </div>
 
-      <div className="hidden min-w-0 text-left sm:block">
-        <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-white/50">
-          Canción
-        </p>
+              <div className="min-w-0">
+                <p className="text-[9px] font-semibold uppercase tracking-[0.16em] text-white/50">
+                  Canción del recuerdo
+                </p>
 
-        <p className="max-w-[120px] truncate text-xs font-semibold text-white">
-          Escuchar en Spotify
-        </p>
-      </div>
-    </button>
+                <p className="truncate text-xs font-semibold text-white">
+                  Spotify
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={closePlayer}
+              className="ml-2 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/10 text-sm text-white transition hover:bg-white/20"
+              aria-label="Cerrar Spotify"
+            >
+              ✕
+            </button>
+          </div>
+
+          <iframe
+            src={embedUrl}
+            width="100%"
+            height="152"
+            frameBorder="0"
+            allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+            loading="eager"
+            title="Canción del recuerdo"
+            className="block w-full"
+          />
+        </div>
+      ) : (
+        /* BOTÓN CIRCULAR */
+        <button
+          type="button"
+          onClick={openPlayer}
+          aria-label="Abrir canción de Spotify"
+          className="absolute bottom-4 right-4 z-[50] flex h-14 w-14 items-center justify-center rounded-full bg-[#121212] shadow-xl ring-2 ring-white/80 transition-all duration-200 hover:scale-105 active:scale-90 sm:bottom-5 sm:right-5 sm:h-16 sm:w-16"
+        >
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#1DB954] shadow-md sm:h-11 sm:w-11">
+            <span className="ml-0.5 text-lg font-bold text-black">
+              ▶
+            </span>
+          </div>
+        </button>
+      )}
+    </>
   );
 }
