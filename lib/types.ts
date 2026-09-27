@@ -7,6 +7,7 @@ export type Album = {
   slug: string;
   cover_path: string | null;
   cover_url: string | null;
+  spotify_url: string | null;
   created_at: string;
 };
 

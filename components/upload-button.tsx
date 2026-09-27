@@ -15,14 +15,13 @@ type UploadButtonProps = {
   stickerCode: string;
   photoCount: number;
   maxPhotos: number;
+  onOpen?: () => void;
 };
 
 const MAX_IMAGE_DIMENSION = 2000;
 const JPEG_QUALITY = 0.82;
 
 async function compressImage(file: File): Promise<File> {
-  // GIF, HEIC y HEIF pueden no ser compatibles con Canvas.
-  // En esos casos dejamos el archivo original.
   if (
     file.type === "image/gif" ||
     file.type === "image/heic" ||
@@ -91,14 +90,14 @@ async function compressImage(file: File): Promise<File> {
       return file;
     }
 
-    // Si la compresión no reduce el tamaño,
-    // conservamos el archivo original.
     if (blob.size >= file.size) {
       return file;
     }
 
     return new File(
-      [blob],
+      [
+        blob,
+      ],
       `${file.name.replace(/\.[^/.]+$/, "")}.jpg`,
       {
         type: "image/jpeg",
@@ -116,6 +115,7 @@ export function UploadButton({
   stickerCode,
   photoCount,
   maxPhotos,
+  onOpen,
 }: UploadButtonProps) {
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -323,9 +323,10 @@ export function UploadButton({
 
       <button
         type="button"
-        onClick={() =>
-          inputRef.current?.click()
-        }
+        onClick={() => {
+          onOpen?.();
+          inputRef.current?.click();
+        }}
         disabled={uploading}
         className="inline-flex h-14 min-h-[48px] w-full max-w-sm items-center justify-center gap-2 rounded-full bg-tierra px-7 text-base font-semibold text-blanco shadow-lg shadow-piedra/20 transition-transform duration-150 hover:scale-[1.02] active:scale-95 disabled:opacity-70 sm:w-auto sm:min-w-[14rem] sm:text-sm"
       >

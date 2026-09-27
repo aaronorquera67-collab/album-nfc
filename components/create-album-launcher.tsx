@@ -28,6 +28,7 @@ export function CreateAlbumLauncher() {
     }
 
     window.addEventListener("keydown", onKeyDown);
+
     return () => {
       document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", onKeyDown);
@@ -73,6 +74,7 @@ export function CreateAlbumLauncher() {
                   className="mb-3 h-1 w-10 rounded-full bg-borde sm:hidden"
                   aria-hidden
                 />
+
                 <div className="flex w-full items-start justify-between gap-3">
                   <div className="min-w-0">
                     <h2
@@ -81,10 +83,12 @@ export function CreateAlbumLauncher() {
                     >
                       Nuevo álbum
                     </h2>
+
                     <p className="mt-1 text-sm text-muted-foreground">
                       Un emoji, un nombre y el país. Los tres.
                     </p>
                   </div>
+
                   <button
                     type="button"
                     onClick={close}
@@ -109,6 +113,7 @@ export function CreateAlbumLauncher() {
                       <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                         Emoji del álbum
                       </span>
+
                       <div className="grid grid-cols-5 gap-1.5 rounded-2xl border border-surface-border bg-arena p-2 sm:grid-cols-8 sm:gap-2 sm:p-2.5">
                         {ALBUM_EMOJIS.map((option) => (
                           <button
@@ -136,6 +141,7 @@ export function CreateAlbumLauncher() {
                       >
                         Nombre del álbum
                       </label>
+
                       <input
                         id="name"
                         name="name"
@@ -156,6 +162,7 @@ export function CreateAlbumLauncher() {
                       >
                         País
                       </label>
+
                       <select
                         id="country_code"
                         name="country_code"
@@ -169,12 +176,36 @@ export function CreateAlbumLauncher() {
                         <option value="" disabled>
                           Selecciona un país
                         </option>
+
                         {COUNTRIES.map((country) => (
                           <option key={country.code} value={country.code}>
                             {country.name}
                           </option>
                         ))}
                       </select>
+                    </div>
+
+                    <div className="flex flex-col gap-1.5">
+                      <label
+                        htmlFor="spotify_url"
+                        className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
+                      >
+                        🎵 Spotify
+                      </label>
+
+                      <input
+                        id="spotify_url"
+                        name="spotify_url"
+                        type="url"
+                        placeholder="https://open.spotify.com/..."
+                        autoComplete="off"
+                        className="h-12 min-h-[44px] w-full rounded-xl border border-surface-border bg-arena px-4 text-base text-foreground placeholder:text-muted-foreground/60 outline-none focus:border-tierra"
+                      />
+
+                      <p className="text-xs leading-relaxed text-muted-foreground">
+                        Opcional. Pegá el enlace de una canción de Spotify para
+                        asociarla a este álbum.
+                      </p>
                     </div>
 
                     {state.error ? (
@@ -195,6 +226,7 @@ export function CreateAlbumLauncher() {
                     >
                       Cancelar
                     </button>
+
                     <button
                       type="submit"
                       disabled={pending}

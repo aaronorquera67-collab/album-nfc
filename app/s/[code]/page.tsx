@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AlbumWelcome } from "@/components/album-welcome";
+import { AlbumInteractions } from "@/components/album-interactions";
 import { BrandLockup } from "@/components/brand-lockup";
 import { PhotoGrid } from "@/components/photo-grid";
-import { UploadButton } from "@/components/upload-button";
 import { getAlbumBySticker } from "@/lib/albums";
 import { createClient } from "@/lib/supabase/server";
 
@@ -50,7 +50,7 @@ export default async function StickerAlbumPage(
       />
 
       <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-4 pb-[calc(8rem+env(safe-area-inset-bottom))] pt-[calc(1.25rem+env(safe-area-inset-top))] sm:gap-8 sm:px-8 sm:pt-16">
-        
+
         {/* CABECERA DEL ÁLBUM */}
         <div
           className="relative overflow-hidden rounded-[2rem] border border-surface-border bg-arena shadow-sm"
@@ -64,14 +64,13 @@ export default async function StickerAlbumPage(
               : undefined
           }
         >
-          {/* Capa sobre la foto */}
           {album.cover_url ? (
             <div className="absolute inset-0 bg-piedra/55 backdrop-blur-[1px]" />
           ) : null}
 
           <div className="relative z-10 flex min-h-[230px] flex-col justify-between p-5 sm:min-h-[270px] sm:p-7">
-            
-            {/* Parte superior */}
+
+            {/* PARTE SUPERIOR */}
             <div className="flex items-start justify-between gap-3">
               <div className="rounded-xl bg-blanco/90 px-3 py-2 shadow-sm backdrop-blur-sm">
                 <BrandLockup
@@ -95,7 +94,7 @@ export default async function StickerAlbumPage(
               </div>
             </div>
 
-            {/* Información del álbum */}
+            {/* INFORMACIÓN DEL ÁLBUM */}
             <div className="mt-8">
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-blanco drop-shadow-md">
                 {album.emoji} {album.country_name}
@@ -125,6 +124,16 @@ export default async function StickerAlbumPage(
                 </p>
               ) : null}
             </div>
+
+            {/* SPOTIFY + AÑADIR RECUERDOS */}
+            <AlbumInteractions
+              spotifyUrl={album.spotify_url}
+              albumId={album.id}
+              slug={album.slug}
+              stickerCode={code}
+              photoCount={photoCount}
+              maxPhotos={MAX_PHOTOS}
+            />
           </div>
         </div>
 
@@ -135,15 +144,6 @@ export default async function StickerAlbumPage(
           slug={album.slug}
           coverPath={album.cover_path}
           isAdmin={isAdmin}
-        />
-
-        {/* BOTÓN PARA AGREGAR */}
-        <UploadButton
-          albumId={album.id}
-          slug={album.slug}
-          stickerCode={code}
-          photoCount={photoCount}
-          maxPhotos={MAX_PHOTOS}
         />
       </main>
     </>

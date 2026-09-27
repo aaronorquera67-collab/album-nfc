@@ -55,6 +55,12 @@ export async function createAlbum(
     formData.get("emoji") ?? "",
   ).trim();
 
+  const spotifyInput = String(
+    formData.get("spotify_url") ?? "",
+  ).trim();
+
+  const spotifyUrl = spotifyInput || null;
+
   if (!name) {
     return {
       error: "Ponle un nombre al álbum.",
@@ -71,6 +77,26 @@ export async function createAlbum(
     return {
       error: "Elige un emoji para el álbum.",
     };
+  }
+
+  if (spotifyUrl) {
+    try {
+      const url = new URL(spotifyUrl);
+
+      if (
+        url.hostname !== "open.spotify.com" &&
+        url.hostname !== "www.open.spotify.com"
+      ) {
+        return {
+          error:
+            "El enlace de Spotify debe ser de open.spotify.com.",
+        };
+      }
+    } catch {
+      return {
+        error: "El enlace de Spotify no es válido.",
+      };
+    }
   }
 
   const emoji = isValidAlbumEmoji(emojiInput)
@@ -97,6 +123,7 @@ export async function createAlbum(
         p_country_code: countryCode,
         p_country_name: countryName,
         p_slug: slug,
+        p_spotify_url: spotifyUrl,
       })
       .single();
 
